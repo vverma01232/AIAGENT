@@ -83,7 +83,7 @@ func GeneratewithAIHandler() gin.HandlerFunc {
 
 		modelBody, _ := json.Marshal(modelConfig)
 
-		req, err := http.NewRequest("POST", modelUri+"/v1/chat/completions", bytes.NewBuffer(modelBody))
+		req, err := http.NewRequest("POST", modelUri, bytes.NewBuffer(modelBody))
 		if err != nil {
 			ReturnResponse(ctx, http.StatusBadRequest, "Error occured while generating the response.", nil)
 			return
