@@ -15,8 +15,8 @@ import (
 
 // GenerateAI				godoc
 // @Tags					AIAgent Apis
-// @Summary					Uplaad Excel File
-// @Description				Upload Excel File
+// @Summary					Generate with AI
+// @Description				Generate with AI
 // @Param					GenerateAI body models.GenerateAIBody true "Generate Body Response"
 // @Produce					application/json
 // @Success					200 {object} responses.ApplicationResponse{}

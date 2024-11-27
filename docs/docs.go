@@ -24,7 +24,7 @@ const docTemplate = `{
                 "tags": [
                     "UserData Apis"
                 ],
-                "summary": "Get Prompts",
+                "summary": "Get User Data",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -37,14 +37,14 @@ const docTemplate = `{
         },
         "/initializ/v1/ai/generatewithAI": {
             "post": {
-                "description": "Upload Excel File",
+                "description": "Generate with AI",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "AIAgent Apis"
                 ],
-                "summary": "Uplaad Excel File",
+                "summary": "Generate with AI",
                 "parameters": [
                     {
                         "description": "Generate Body Response",
@@ -115,6 +115,37 @@ const docTemplate = `{
                 }
             }
         },
+        "/initializ/v1/ai/saveprompt": {
+            "post": {
+                "description": "Upload Excel File",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UserData Apis"
+                ],
+                "summary": "Upload Excel File",
+                "parameters": [
+                    {
+                        "description": "Upload the prompt in the Db",
+                        "name": "UploadExcel",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Prompts"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ApplicationResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/initializ/v1/ai/upload": {
             "post": {
                 "description": "Upload Excel File",
@@ -124,7 +155,7 @@ const docTemplate = `{
                 "tags": [
                     "UserData Apis"
                 ],
-                "summary": "Uplaad Excel File",
+                "summary": "Upload Excel File",
                 "parameters": [
                     {
                         "description": "File Data in base64 encoded",
@@ -168,6 +199,29 @@ const docTemplate = `{
                 },
                 "to_do_research": {
                     "type": "boolean"
+                }
+            }
+        },
+        "models.Prompts": {
+            "type": "object",
+            "properties": {
+                "created_by": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "prompt": {
+                    "type": "string"
+                },
+                "prompt_rule": {
+                    "type": "string"
+                },
+                "purpose": {
+                    "type": "string"
                 }
             }
         },

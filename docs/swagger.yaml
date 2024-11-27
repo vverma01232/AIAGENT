@@ -14,6 +14,21 @@ definitions:
       to_do_research:
         type: boolean
     type: object
+  models.Prompts:
+    properties:
+      created_by:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      prompt:
+        type: string
+      prompt_rule:
+        type: string
+      purpose:
+        type: string
+    type: object
   models.UploadRequest:
     properties:
       file_data:
@@ -45,12 +60,12 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.ApplicationResponse'
-      summary: Get Prompts
+      summary: Get User Data
       tags:
       - UserData Apis
   /initializ/v1/ai/generatewithAI:
     post:
-      description: Upload Excel File
+      description: Generate with AI
       parameters:
       - description: Generate Body Response
         in: body
@@ -65,7 +80,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.ApplicationResponse'
-      summary: Uplaad Excel File
+      summary: Generate with AI
       tags:
       - AIAgent Apis
   /initializ/v1/ai/prompt/{promptId}:
@@ -100,6 +115,26 @@ paths:
       summary: Get Prompts
       tags:
       - Prompt Apis
+  /initializ/v1/ai/saveprompt:
+    post:
+      description: Upload Excel File
+      parameters:
+      - description: Upload the prompt in the Db
+        in: body
+        name: UploadExcel
+        required: true
+        schema:
+          $ref: '#/definitions/models.Prompts'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ApplicationResponse'
+      summary: Upload Excel File
+      tags:
+      - UserData Apis
   /initializ/v1/ai/upload:
     post:
       description: Upload Excel File
@@ -117,7 +152,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.ApplicationResponse'
-      summary: Uplaad Excel File
+      summary: Upload Excel File
       tags:
       - UserData Apis
 swagger: "2.0"

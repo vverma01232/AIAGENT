@@ -19,7 +19,7 @@ import (
 
 // UploadExcel				godoc
 // @Tags					UserData Apis
-// @Summary					Uplaad Excel File
+// @Summary					Upload Excel File
 // @Description				Upload Excel File
 // @Param					UploadExcel body models.UploadRequest true "File Data in base64 encoded"
 // @Produce					application/json
@@ -90,7 +90,7 @@ func UploadExcel(userDataRepo repository.Repository) gin.HandlerFunc {
 
 // GetAllUserData			godoc
 // @Tags					UserData Apis
-// @Summary					Get Prompts
+// @Summary					Get User Data
 // @Description				Get all Data
 // @Produce					application/json
 // @Success					200 {object} responses.ApplicationResponse{}

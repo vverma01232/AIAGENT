@@ -1,9 +1,12 @@
 package models
 
 type Prompts struct {
-	ID     string `bson:"_id,omitempty" json:"id"`
-	Name   string `bson:"name" json:"name"`
-	Prompt string `bson:"prompt,omitempty" json:"prompt,omitempty"`
+	ID         string `bson:"_id,omitempty" json:"id"`
+	Name       string `bson:"name" json:"name"`
+	Prompt     string `bson:"prompt,omitempty" json:"prompt,omitempty"`
+	Purpose    string `bson:"purpose,omitempty" json:"purpose,omitempty"`
+	PromptRule string `bson:"prompt_rule,omitempty" json:"prompt_rule,omitempty"`
+	CreatedBy  string `bson:"created_by,omitempty" json:"created_by,omitempty"`
 }
 
 type UserDetails struct {

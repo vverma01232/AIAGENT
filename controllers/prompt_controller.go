@@ -81,3 +81,30 @@ func GetPromptsByID(aIPromptsRepo repository.Repository) gin.HandlerFunc {
 		})
 	}
 }
+
+// UploadExcel				godoc
+// @Tags					UserData Apis
+// @Summary					Upload Excel File
+// @Description				Upload Excel File
+// @Param					UploadExcel body models.Prompts true "Upload the prompt in the Db"
+// @Produce					application/json
+// @Success					200 {object} responses.ApplicationResponse{}
+// @Router					/initializ/v1/ai/saveprompt [POST]
+func SavePrompt(aIPromptsRepo repository.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var body models.Prompts
+		c.BindJSON(&body)
+		_, err := aIPromptsRepo.InsertOne(body)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, map[string]interface{}{
+				"code":    http.StatusBadRequest,
+				"message": "Error occured while saving the prompt in db : " + err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusOK, responses.ApplicationResponse{
+			Status:  http.StatusOK,
+			Message: "Successfully saved the prompt.",
+		})
+	}
+}
