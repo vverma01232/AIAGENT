@@ -1,0 +1,123 @@
+definitions:
+  models.GenerateAIBody:
+    properties:
+      company_url:
+        type: string
+      linkedin_url:
+        type: string
+      stream:
+        type: boolean
+      system_prompt:
+        type: string
+      task:
+        type: string
+      to_do_research:
+        type: boolean
+    type: object
+  models.UploadRequest:
+    properties:
+      file_data:
+        type: string
+    type: object
+  responses.ApplicationResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: Init App aiagent Open Api Spec
+  title: Init App aiagent
+  version: "1.0"
+paths:
+  /initializ/v1/ai/allusers:
+    get:
+      description: Get all Data
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ApplicationResponse'
+      summary: Get Prompts
+      tags:
+      - UserData Apis
+  /initializ/v1/ai/generatewithAI:
+    post:
+      description: Upload Excel File
+      parameters:
+      - description: Generate Body Response
+        in: body
+        name: GenerateAI
+        required: true
+        schema:
+          $ref: '#/definitions/models.GenerateAIBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ApplicationResponse'
+      summary: Uplaad Excel File
+      tags:
+      - AIAgent Apis
+  /initializ/v1/ai/prompt/{promptId}:
+    get:
+      description: Get AI Prompts by ID
+      parameters:
+      - description: promptId
+        in: path
+        name: promptId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ApplicationResponse'
+      summary: Get Prompt by ID
+      tags:
+      - Prompt Apis
+  /initializ/v1/ai/prompts:
+    get:
+      description: Get all AI Prompts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ApplicationResponse'
+      summary: Get Prompts
+      tags:
+      - Prompt Apis
+  /initializ/v1/ai/upload:
+    post:
+      description: Upload Excel File
+      parameters:
+      - description: File Data in base64 encoded
+        in: body
+        name: UploadExcel
+        required: true
+        schema:
+          $ref: '#/definitions/models.UploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ApplicationResponse'
+      summary: Uplaad Excel File
+      tags:
+      - UserData Apis
+swagger: "2.0"
