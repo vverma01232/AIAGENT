@@ -43,7 +43,7 @@ var DB *mongo.Client
 
 // GetCollection function helps in getting database collections
 func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
-	collection := client.Database("Excel").Collection(collectionName)
+	collection := client.Database("AIAGENT").Collection(collectionName)
 	return collection
 }
 func GetRepoCollection(collectionName string) repository.Repository {
