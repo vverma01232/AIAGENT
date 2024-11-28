@@ -10,6 +10,7 @@ type Prompts struct {
 	PromptRule string    `bson:"prompt_rule,omitempty" json:"prompt_rule,omitempty"`
 	CreatedBy  string    `bson:"created_by,omitempty" json:"created_by,omitempty"`
 	UpdatedAt  time.Time `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
+	CreatedAt  time.Time `bson:"created_at,omitempty" json:"created_at,omitempty"`
 	UpdatedBy  string    `bson:"updated_by,omitempty" json:"updated_by,omitempty"`
 }
 

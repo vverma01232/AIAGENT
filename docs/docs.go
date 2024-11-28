@@ -236,6 +236,9 @@ const docTemplate = `{
         "models.Prompts": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "type": "string"
+                },
                 "created_by": {
                     "type": "string"
                 },

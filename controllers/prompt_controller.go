@@ -6,6 +6,7 @@ import (
 	"aiagent/responses"
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -94,6 +95,8 @@ func SavePrompt(aIPromptsRepo repository.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var body models.Prompts
 		c.BindJSON(&body)
+		body.UpdatedAt = time.Now()
+		body.CreatedAt = time.Now()
 		_, err := aIPromptsRepo.InsertOne(body)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, map[string]interface{}{
@@ -143,7 +146,7 @@ func UpdatePromptById(aIPromptsRepo repository.Repository) gin.HandlerFunc {
 		}
 		update := primitive.M{
 			"$set": primitive.M{
-				"updated_at":  body.UpdatedAt,
+				"updated_at":  time.Now(),
 				"updated_by":  body.UpdatedBy,
 				"prompt":      body.Prompt,
 				"prompt_rule": body.PromptRule,

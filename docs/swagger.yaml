@@ -16,6 +16,8 @@ definitions:
     type: object
   models.Prompts:
     properties:
+      created_at:
+        type: string
       created_by:
         type: string
       id:

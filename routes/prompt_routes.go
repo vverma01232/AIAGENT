@@ -12,6 +12,6 @@ func PromptRoutes(router *gin.Engine) {
 
 	router.GET("/initializ/v1/ai/prompts", controllers.GetPrompts(aIPromptRepo))
 	router.GET("/initializ/v1/ai/prompt/:promptId", controllers.GetPromptsByID(aIPromptRepo))
-	router.POST("/initializ/v1/ai/saveprompts", controllers.SavePrompt(aIPromptRepo))
+	router.POST("/initializ/v1/ai/saveprompt", controllers.SavePrompt(aIPromptRepo))
 	router.PUT("/initializ/v1/ai/updateprompt/:promptId", controllers.UpdatePromptById(aIPromptRepo))
 }
