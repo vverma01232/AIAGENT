@@ -116,6 +116,7 @@ func SavePrompt(aIPromptsRepo repository.Repository) gin.HandlerFunc {
 // @Tags					Prompt Apis
 // @Summary					Update Prompt
 // @Description				Update Prompt In Db
+// @Param					promptId path string true "promptId"
 // @Param					UploadExcel body models.Prompts true "Update the prompt in the Db"
 // @Produce					application/json
 // @Success					200 {object} responses.ApplicationResponse{}

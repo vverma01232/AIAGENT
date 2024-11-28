@@ -145,6 +145,11 @@ paths:
     put:
       description: Update Prompt In Db
       parameters:
+      - description: promptId
+        in: path
+        name: promptId
+        required: true
+        type: string
       - description: Update the prompt in the Db
         in: body
         name: UploadExcel

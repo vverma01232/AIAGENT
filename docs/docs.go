@@ -158,6 +158,13 @@ const docTemplate = `{
                 "summary": "Update Prompt",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "promptId",
+                        "name": "promptId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "description": "Update the prompt in the Db",
                         "name": "UploadExcel",
                         "in": "body",
