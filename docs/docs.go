@@ -117,17 +117,48 @@ const docTemplate = `{
         },
         "/initializ/v1/ai/saveprompt": {
             "post": {
-                "description": "Upload Excel File",
+                "description": "Save Prompt",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "UserData Apis"
+                    "Prompt Apis"
                 ],
-                "summary": "Upload Excel File",
+                "summary": "Save Prompt",
                 "parameters": [
                     {
                         "description": "Upload the prompt in the Db",
+                        "name": "UploadExcel",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Prompts"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ApplicationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/initializ/v1/ai/updateprompt/{promptId}": {
+            "put": {
+                "description": "Update Prompt In Db",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Prompt Apis"
+                ],
+                "summary": "Update Prompt",
+                "parameters": [
+                    {
+                        "description": "Update the prompt in the Db",
                         "name": "UploadExcel",
                         "in": "body",
                         "required": true,
@@ -221,6 +252,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "purpose": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
                     "type": "string"
                 }
             }

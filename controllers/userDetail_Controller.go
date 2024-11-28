@@ -56,22 +56,28 @@ func UploadExcel(userDataRepo repository.Repository) gin.HandlerFunc {
 		}
 
 		var userList []models.UserDetails
-		for _, row := range excel.GetRows("Sheet1") {
-			if len(row) >= 6 {
-				var user models.UserDetails
-				user.FirstName = row[0]
-				user.LastName = row[1]
-				user.Email = row[2]
-				user.CompanyDetails = row[3]
-				user.LinkedInProfileUrl = row[4]
+		for i, row := range excel.GetRows("Sheet1") {
+			if i == 0 {
+				continue
+			} else {
+				user := models.UserDetails{
+					Name:               row[1],
+					Experience:         row[2],
+					Location:           row[3],
+					MobileNo:           row[4],
+					Email:              row[5],
+					Designation:        row[6],
+					CompanyDetails:     row[7],
+					LinkedInProfileUrl: row[8],
+				}
 				userList = append(userList, user)
 			}
 		}
 
 		data, _ = json.Marshal(userList)
+
 		var interfaceData []interface{}
 		json.Unmarshal(data, &interfaceData)
-
 		_, err = userDataRepo.InsertMany(interfaceData, nil)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, responses.ApplicationResponse{

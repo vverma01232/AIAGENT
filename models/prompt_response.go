@@ -1,20 +1,26 @@
 package models
 
+import "time"
+
 type Prompts struct {
-	ID         string `bson:"_id,omitempty" json:"id"`
-	Name       string `bson:"name" json:"name"`
-	Prompt     string `bson:"prompt,omitempty" json:"prompt,omitempty"`
-	Purpose    string `bson:"purpose,omitempty" json:"purpose,omitempty"`
-	PromptRule string `bson:"prompt_rule,omitempty" json:"prompt_rule,omitempty"`
-	CreatedBy  string `bson:"created_by,omitempty" json:"created_by,omitempty"`
+	ID         string    `bson:"_id,omitempty" json:"id"`
+	Name       string    `bson:"name" json:"name"`
+	Prompt     string    `bson:"prompt,omitempty" json:"prompt,omitempty"`
+	Purpose    string    `bson:"purpose,omitempty" json:"purpose,omitempty"`
+	PromptRule string    `bson:"prompt_rule,omitempty" json:"prompt_rule,omitempty"`
+	CreatedBy  string    `bson:"created_by,omitempty" json:"created_by,omitempty"`
+	UpdatedAt  time.Time `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
+	UpdatedBy  string    `bson:"updated_by,omitempty" json:"updated_by,omitempty"`
 }
 
 type UserDetails struct {
-	ID                 string `bson:"_id,omitempty" json:"id,omitempty"`
-	FirstName          string `bson:"first_name" json:"first_name"`
-	LastName           string `bson:"last_name" json:"last_name"`
+	Name               string `bson:"name" json:"name"`
+	Experience         string `bson:"experience" json:"experience"`
+	Location           string `bson:"location" json:"location"`
+	MobileNo           string `bson:"mob_no" json:"mob_no"`
 	Email              string `bson:"email" json:"email"`
 	CompanyDetails     string `bson:"company" json:"company"`
+	Designation        string `bson:"designation" json:"designation"`
 	LinkedInProfileUrl string `bson:"linkedin_url" json:"linkedin_url"`
 }
 

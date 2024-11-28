@@ -82,10 +82,10 @@ func GetPromptsByID(aIPromptsRepo repository.Repository) gin.HandlerFunc {
 	}
 }
 
-// UploadExcel				godoc
-// @Tags					UserData Apis
-// @Summary					Upload Excel File
-// @Description				Upload Excel File
+// SavePrompt				godoc
+// @Tags					Prompt Apis
+// @Summary					Save Prompt
+// @Description				Save Prompt
 // @Param					UploadExcel body models.Prompts true "Upload the prompt in the Db"
 // @Produce					application/json
 // @Success					200 {object} responses.ApplicationResponse{}
@@ -102,6 +102,62 @@ func SavePrompt(aIPromptsRepo repository.Repository) gin.HandlerFunc {
 			})
 			return
 		}
+		c.JSON(http.StatusOK, responses.ApplicationResponse{
+			Status:  http.StatusOK,
+			Message: "Successfully saved the prompt.",
+		})
+	}
+}
+
+// Uploadprompt				godoc
+// @Tags					Prompt Apis
+// @Summary					Update Prompt
+// @Description				Update Prompt In Db
+// @Param					UploadExcel body models.Prompts true "Update the prompt in the Db"
+// @Produce					application/json
+// @Success					200 {object} responses.ApplicationResponse{}
+// @Router					/initializ/v1/ai/updateprompt/{promptId} [PUT]
+func UpdatePromptById(aIPromptsRepo repository.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var body models.Prompts
+		promptId := c.Param("promptId")
+		if promptId == "" {
+			c.JSON(http.StatusBadRequest, map[string]interface{}{
+				"code":    http.StatusBadRequest,
+				"message": "Prompt Id is required",
+			})
+			return
+		}
+
+		err := c.BindJSON(&body)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, map[string]interface{}{
+				"code":    http.StatusBadRequest,
+				"message": "Error occured while mapping the body : " + err.Error(),
+			})
+			return
+		}
+		promptObjectId, _ := primitive.ObjectIDFromHex(promptId)
+		filter := primitive.M{
+			"_id": promptObjectId,
+		}
+		update := primitive.M{
+			"$set": primitive.M{
+				"updated_at":  body.UpdatedAt,
+				"updated_by":  body.UpdatedBy,
+				"prompt":      body.Prompt,
+				"prompt_rule": body.PromptRule,
+			},
+		}
+		err = aIPromptsRepo.UpdateOne(filter, update, nil)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, responses.ApplicationResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Error updating prompt",
+			})
+			return
+		}
+
 		c.JSON(http.StatusOK, responses.ApplicationResponse{
 			Status:  http.StatusOK,
 			Message: "Successfully saved the prompt.",

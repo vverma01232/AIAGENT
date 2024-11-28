@@ -28,6 +28,10 @@ definitions:
         type: string
       purpose:
         type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: string
     type: object
   models.UploadRequest:
     properties:
@@ -117,7 +121,7 @@ paths:
       - Prompt Apis
   /initializ/v1/ai/saveprompt:
     post:
-      description: Upload Excel File
+      description: Save Prompt
       parameters:
       - description: Upload the prompt in the Db
         in: body
@@ -132,9 +136,29 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/responses.ApplicationResponse'
-      summary: Upload Excel File
+      summary: Save Prompt
       tags:
-      - UserData Apis
+      - Prompt Apis
+  /initializ/v1/ai/updateprompt/{promptId}:
+    put:
+      description: Update Prompt In Db
+      parameters:
+      - description: Update the prompt in the Db
+        in: body
+        name: UploadExcel
+        required: true
+        schema:
+          $ref: '#/definitions/models.Prompts'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ApplicationResponse'
+      summary: Update Prompt
+      tags:
+      - Prompt Apis
   /initializ/v1/ai/upload:
     post:
       description: Upload Excel File
