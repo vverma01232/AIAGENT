@@ -118,7 +118,7 @@ func GeneratewithAIHandler() gin.HandlerFunc {
 			}
 			// Return the full response in JSON format
 			ctx.Header("Content-Type", "application/json")
-			ReturnResponse(ctx, http.StatusBadRequest, "Error occured while generating the response.", string(bodyBytes))
+			ReturnResponse(ctx, http.StatusOK, "Successfully generate the response", string(bodyBytes))
 		}
 	}
 }
