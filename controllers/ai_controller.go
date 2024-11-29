@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -65,6 +66,8 @@ func GeneratewithAIHandler() gin.HandlerFunc {
 				ReturnResponse(ctx, http.StatusBadRequest, "Error occurred while reading the response body.", nil)
 				return
 			}
+			reserachedData := ScrapeResponse.Choices[0].Message.Content
+			body.Task = strings.ReplaceAll(body.Task, "**research**", reserachedData)
 			defer resp.Body.Close()
 		}
 		modelUri := os.Getenv("MODELURI")
@@ -88,6 +91,7 @@ func GeneratewithAIHandler() gin.HandlerFunc {
 			ReturnResponse(ctx, http.StatusBadRequest, "Error occured while generating the response.", nil)
 			return
 		}
+		req.Header.Set("Authorization", "Bearer "+os.Getenv("TOKEN"))
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			ReturnResponse(ctx, http.StatusBadRequest, "Error occured while generating the response.", nil)
@@ -116,7 +120,6 @@ func GeneratewithAIHandler() gin.HandlerFunc {
 			ctx.Header("Content-Type", "application/json")
 			ReturnResponse(ctx, http.StatusBadRequest, "Error occured while generating the response.", string(bodyBytes))
 		}
-
 	}
 }
 
