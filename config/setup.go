@@ -52,7 +52,3 @@ func GetRepoCollection(collectionName string) repository.Repository {
 	}
 	return &repo
 }
-func GetPromptCollection(client *mongo.Client, collectionName string) *mongo.Collection {
-	collection := client.Database("AgenticAI").Collection("AIPrompts")
-	return collection
-}
