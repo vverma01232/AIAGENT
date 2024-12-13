@@ -14,6 +14,11 @@ definitions:
       to_do_research:
         type: boolean
     type: object
+  models.PainPointRole:
+    properties:
+      role:
+        type: string
+    type: object
   models.Prompts:
     properties:
       created_at:
@@ -89,6 +94,38 @@ paths:
       summary: Generate with AI
       tags:
       - AIAgent Apis
+  /initializ/v1/ai/painpoints:
+    get:
+      description: Get all Pain Points and Value Proposition
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ApplicationResponse'
+      summary: Get Pain Points and Value Proposition
+      tags:
+      - Pain Points Apis
+    post:
+      description: Save Pain Points and Value Proposition
+      parameters:
+      - description: Pain Points and Value Proposition
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.PainPointRole'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ApplicationResponse'
+      summary: Save Pain Points and Value Proposition
+      tags:
+      - Pain Points Apis
   /initializ/v1/ai/prompt/{promptId}:
     get:
       description: Get AI Prompts by ID

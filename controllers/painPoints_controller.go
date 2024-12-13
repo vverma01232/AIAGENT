@@ -17,7 +17,13 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-// GetPainPoints fetches all pain points from the repository
+// GetPainPoints				godoc
+// @Tags					Pain Points Apis
+// @Summary					Get Pain Points and Value Proposition
+// @Description				Get all Pain Points and Value Proposition
+// @Produce					application/json
+// @Success					200 {object} responses.ApplicationResponse{}
+// @Router					/initializ/v1/ai/painpoints [GET]
 func GetPainPoints(painPointRepo repository.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := context.TODO()
@@ -46,7 +52,14 @@ func GetPainPoints(painPointRepo repository.Repository) gin.HandlerFunc {
 	}
 }
 
-// SaveAiResponseToDB processes the AI-generated response, extracts content, and saves it to the database.
+// SavePainPoints			godoc
+// @Tags					Pain Points Apis
+// @Summary					Save Pain Points and Value Proposition
+// @Description				Save Pain Points and Value Proposition
+// @Produce					application/json
+// @Param                    request body models.PainPointRole true  "Pain Points and Value Proposition"
+// @Success					200 {object} responses.ApplicationResponse{}
+// @Router					/initializ/v1/ai/painpoints [POST]
 func SaveAiResponseToDB(painPointRepo repository.Repository) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var apiResponseData struct {
@@ -142,11 +155,11 @@ func splitContent(content string) (string, string) {
 }
 
 // SavePainPoints saves the generated content as a pain point in the database
-func SavePainPoints(painPointRepo repository.Repository, painPoints, valuePreposition, role string) error {
+func SavePainPoints(painPointRepo repository.Repository, painPoints, valueProposition, role string) error {
 	painPoint := models.PainPointModel{
 		Role:             role,
 		PainPoint:        painPoints,
-		ValuePreposition: valuePreposition,
+		ValueProposition: valueProposition,
 	}
 
 	var data interface{}

@@ -66,6 +66,55 @@ const docTemplate = `{
                 }
             }
         },
+        "/initializ/v1/ai/painpoints": {
+            "get": {
+                "description": "Get all Pain Points and Value Proposition",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pain Points Apis"
+                ],
+                "summary": "Get Pain Points and Value Proposition",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ApplicationResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Save Pain Points and Value Proposition",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pain Points Apis"
+                ],
+                "summary": "Save Pain Points and Value Proposition",
+                "parameters": [
+                    {
+                        "description": "Pain Points and Value Proposition",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.PainPointRole"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ApplicationResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/initializ/v1/ai/prompt/{promptId}": {
             "get": {
                 "description": "Get AI Prompts by ID",
@@ -240,6 +289,14 @@ const docTemplate = `{
                 }
             }
         },
+        "models.PainPointRole": {
+            "type": "object",
+            "properties": {
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Prompts": {
             "type": "object",
             "properties": {
@@ -308,6 +365,8 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "Init App aiagent Open Api Spec",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {
