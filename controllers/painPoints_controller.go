@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -110,9 +111,9 @@ func SaveAiResponseToDB(painPointRepo repository.Repository) gin.HandlerFunc {
 		}
 		reserachedData := ModelResponse.Choices[0].Message.Content
 		defer resp.Body.Close()
-
+		painPoints, valueProposition := splitContent(reserachedData)
 		// Save the content to the database
-		err = SavePainPoints(painPointRepo, reserachedData, apiResponseData.Role)
+		err = SavePainPoints(painPointRepo, painPoints, valueProposition, apiResponseData.Role)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error saving pain point to the database: %v", err)})
 			return
@@ -124,12 +125,28 @@ func SaveAiResponseToDB(painPointRepo repository.Repository) gin.HandlerFunc {
 		})
 	}
 }
+func splitContent(content string) (string, string) {
+	content = strings.ReplaceAll(content, "*", "")
+	content = strings.ReplaceAll(content, "How Initializ Helps:", "How Initializ.ai Helps:")
+	parts := strings.Split(content, "How Initializ.ai Helps:")
+	var painPoints string
+	var valueProposition string
+	if len(parts) > 1 {
+		painPoints = parts[0]
+		valueProposition = parts[1]
+	} else {
+		painPoints = content
+		valueProposition = "" // Empty value if not found
+	}
+	return painPoints, valueProposition
+}
 
 // SavePainPoints saves the generated content as a pain point in the database
-func SavePainPoints(painPointRepo repository.Repository, content, role string) error {
+func SavePainPoints(painPointRepo repository.Repository, painPoints, valuePreposition, role string) error {
 	painPoint := models.PainPointModel{
-		Role:      role,
-		PainPoint: content,
+		Role:             role,
+		PainPoint:        painPoints,
+		ValuePreposition: valuePreposition,
 	}
 
 	var data interface{}
