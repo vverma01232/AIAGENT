@@ -43,6 +43,7 @@ func main() {
 	routes.UserDataRouter(router)
 	routes.PromptRoutes(router)
 	routes.PainPointRoutes(router)
+	routes.CaseStudyRoutes(router)
 	router.Run(":8081")
 	log.Infof("Server listening on http://localhost:8081/")
 	if err := http.ListenAndServe("0.0.0.0:8081", router); err != nil {

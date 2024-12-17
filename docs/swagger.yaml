@@ -1,4 +1,9 @@
 definitions:
+  models.Casestudy:
+    properties:
+      url:
+        type: string
+    type: object
   models.GenerateAIBody:
     properties:
       company_url:
@@ -74,6 +79,38 @@ paths:
       summary: Get User Data
       tags:
       - UserData Apis
+  /initializ/v1/ai/casestudy:
+    get:
+      description: Get Case Study Api
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ApplicationResponse'
+      summary: Get Case Study
+      tags:
+      - Case Study Apis
+    post:
+      description: Save Case Study
+      parameters:
+      - description: Case Study
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.Casestudy'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ApplicationResponse'
+      summary: Save Case Study
+      tags:
+      - Case Study Apis
   /initializ/v1/ai/generatewithAI:
     post:
       description: Generate with AI

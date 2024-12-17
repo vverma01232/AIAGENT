@@ -35,6 +35,55 @@ const docTemplate = `{
                 }
             }
         },
+        "/initializ/v1/ai/casestudy": {
+            "get": {
+                "description": "Get Case Study Api",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Case Study Apis"
+                ],
+                "summary": "Get Case Study",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ApplicationResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Save Case Study",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Case Study Apis"
+                ],
+                "summary": "Save Case Study",
+                "parameters": [
+                    {
+                        "description": "Case Study",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Casestudy"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ApplicationResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/initializ/v1/ai/generatewithAI": {
             "post": {
                 "description": "Generate with AI",
@@ -266,6 +315,14 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "models.Casestudy": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "models.GenerateAIBody": {
             "type": "object",
             "properties": {
