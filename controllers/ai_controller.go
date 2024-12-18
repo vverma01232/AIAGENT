@@ -131,13 +131,9 @@ func GeneratewithAIHandler() gin.HandlerFunc {
 				return
 			}
 
-			// Extract and return only the content field
-			if len(aiResponse.Choices) > 0 {
-				content := aiResponse.Choices[0].Message.Content
-				ReturnResponse(ctx, http.StatusOK, "Successfully generated the content", content)
-			} else {
-				ReturnResponse(ctx, http.StatusBadRequest, "No content found in the AI response", nil)
-			}
+			// Return the full response in JSON format
+			ctx.Header("Content-Type", "application/json")
+			ReturnResponse(ctx, http.StatusOK, "Successfully generate the response", string(bodyBytes))
 		}
 	}
 }

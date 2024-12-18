@@ -4,9 +4,13 @@ import (
 	"aiagent/models"
 	"aiagent/repository"
 	"aiagent/responses"
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
+	"io"
+	"os"
 
 	"net/http"
 	"strings"
@@ -70,6 +74,17 @@ func UploadExcel(userDataRepo repository.Repository) gin.HandlerFunc {
 					CompanyDetails:     row[7],
 					LinkedInProfileUrl: row[8],
 				}
+				parts := strings.Split(user.Email, "@")
+				if len(parts) > 1 {
+					// Assuming the domain part is a valid company URL
+					companyUrl := "https://www." + parts[1]
+					companyDescription, err := scrapeCompanyData(companyUrl)
+					if err != nil {
+						log.Warn("Error fetching company data for", user.CompanyDetails, ":", err)
+					} else {
+						user.CompanyDetails = companyDescription
+					}
+				}
 				userList = append(userList, user)
 			}
 		}
@@ -128,4 +143,45 @@ func GetAllUserData(userDataRepo repository.Repository) gin.HandlerFunc {
 			Data:    userData,
 		})
 	}
+}
+func scrapeCompanyData(companyUrl string) (string, error) {
+	scrapperUrl := os.Getenv("SCRAPPERURI")
+	scrapeBody := map[string]string{
+		"url": companyUrl,
+	}
+	reqbodyBytes, err := json.Marshal(scrapeBody)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal request body: %w", err)
+	}
+	req, err := http.NewRequest("POST", scrapperUrl+"/scrape", bytes.NewBuffer(reqbodyBytes))
+	if err != nil {
+		return "", fmt.Errorf("error occurred while making the scrape request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("error occurred while generating the response: %w", err)
+	}
+	defer resp.Body.Close()
+	var scrapeResponse struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+
+	scrapeResbody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("error occurred while reading the response body: %w", err)
+	}
+	err = json.Unmarshal(scrapeResbody, &scrapeResponse)
+	if err != nil {
+		return "", fmt.Errorf("error occurred while unmarshaling the response body: %w", err)
+	}
+	if len(scrapeResponse.Choices) > 0 {
+		return scrapeResponse.Choices[0].Message.Content, nil
+	}
+
+	return "", fmt.Errorf("no content found in the scraper response")
 }
