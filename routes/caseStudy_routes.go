@@ -12,4 +12,5 @@ func CaseStudyRoutes(router *gin.Engine) {
 
 	router.POST("/initializ/v1/ai/casestudy", controllers.SaveCaseStudy(caseStudyRepo))
 	router.GET("/initializ/v1/ai/casestudy", controllers.GetCaseStudy(caseStudyRepo))
+	router.DELETE("/initializ/v1/ai/casestudy/:id", controllers.DeleteCaseStudy(caseStudyRepo))
 }

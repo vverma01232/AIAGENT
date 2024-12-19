@@ -12,4 +12,5 @@ func PainPointRoutes(router *gin.Engine) {
 
 	router.GET("/initializ/v1/ai/painpoints", controllers.GetPainPoints(painPointRepo))
 	router.POST("/initializ/v1/ai/painpoints", controllers.SaveAiResponseToDB(painPointRepo))
+	router.DELETE("/initializ/v1/ai/painpoints/:id", controllers.DeletePainPoints(painPointRepo))
 }

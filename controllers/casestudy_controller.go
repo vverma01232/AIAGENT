@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // SaveCaseStudy            	godoc
@@ -69,8 +70,8 @@ func SaveCaseStudy(caseStudyRepo repository.Repository) gin.HandlerFunc {
 		}
 		researchedData := ScrapeResponse.Choices[0].Message.Content
 		caseStudy := models.CaseStudy{
-			URL:         body.URL,
-			ScrapedData: researchedData,
+			URL:            body.URL,
+			ResearchedData: researchedData,
 		}
 		if _, err := caseStudyRepo.InsertOne(caseStudy); err != nil {
 			ReturnResponse(c, http.StatusInternalServerError, "Error saving case study to the database", nil)
@@ -109,6 +110,34 @@ func GetCaseStudy(caseStudyRepo repository.Repository) gin.HandlerFunc {
 			Status:  http.StatusOK,
 			Message: "Successfully fetched the prompts",
 			Data:    caseStudy,
+		})
+	}
+}
+
+// DeleteCaseStudy				godoc
+// @Tags					Case Study Apis
+// @Summary					Delete Case Study by ID
+// @Description				Delete Case Study by ID
+// @Param                    id   path string true "Case Study ID"
+// @Success					200 {object} responses.ApplicationResponse{}
+// @Failure					404 {object} responses.ApplicationResponse{}
+// @Router					/initializ/v1/ai/casestudy/{id} [DELETE]
+func DeleteCaseStudy(caseStudyRepo repository.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		caseStudyID := c.Param("id")
+		objectID, err := primitive.ObjectIDFromHex(caseStudyID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, responses.ApplicationResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Invalid case study ID format.",
+			})
+			return
+		}
+		filter := bson.M{"_id": objectID}
+		caseStudyRepo.DeleteMany(filter)
+		c.JSON(http.StatusOK, responses.ApplicationResponse{
+			Status:  http.StatusOK,
+			Message: "Case study deleted successfully",
 		})
 	}
 }

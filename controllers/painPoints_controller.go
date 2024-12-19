@@ -15,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // GetPainPoints				godoc
@@ -162,13 +163,38 @@ func SavePainPoints(painPointRepo repository.Repository, painPoints, valuePropos
 		ValueProposition: valueProposition,
 	}
 
-	var data interface{}
-	bytedata, _ := json.Marshal(&painPoint)
-	json.Unmarshal(bytedata, &data)
 	// Insert the pain point into the database
-	_, err := painPointRepo.InsertOne(data)
+	_, err := painPointRepo.InsertOne(painPoint)
 	if err != nil {
 		return fmt.Errorf("error saving pain point to the database: %v", err)
 	}
 	return nil
+}
+
+// DeleteCaseStudy				godoc
+// @Tags					Pain Points Apis
+// @Summary					Delete Pain Points and Value Proposition by ID
+// @Description				Delete Pain Points and Value Proposition by ID
+// @Param                    id   path string true "Pain Points ID"
+// @Success					200 {object} responses.ApplicationResponse{}
+// @Failure					404 {object} responses.ApplicationResponse{}
+// @Router					/initializ/v1/ai/painpoints/{id} [DELETE]
+func DeletePainPoints(PainPointRepo repository.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		painPointID := c.Param("id")
+		objectID, err := primitive.ObjectIDFromHex(painPointID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, responses.ApplicationResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Invalid Pain Points ID format.",
+			})
+			return
+		}
+		filter := bson.M{"_id": objectID}
+		PainPointRepo.DeleteMany(filter)
+		c.JSON(http.StatusOK, responses.ApplicationResponse{
+			Status:  http.StatusOK,
+			Message: "Pain Points deleted successfully",
+		})
+	}
 }

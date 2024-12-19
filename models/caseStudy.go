@@ -1,8 +1,9 @@
 package models
 
 type CaseStudy struct {
-	URL         string `json:"url" bson:"url"`
-	ScrapedData string `json:"scraped_data" bson:"scraped_data"`
+	ID             string `bson:"_id,omitempty" json:"id"`
+	URL            string `json:"url" bson:"url"`
+	ResearchedData string `json:"researched_data" bson:"researched_data"`
 }
 
 type Casestudy struct {

@@ -84,6 +84,38 @@ const docTemplate = `{
                 }
             }
         },
+        "/initializ/v1/ai/casestudy/{id}": {
+            "delete": {
+                "description": "Delete Case Study by ID",
+                "tags": [
+                    "Case Study Apis"
+                ],
+                "summary": "Delete Case Study by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Case Study ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ApplicationResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ApplicationResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/initializ/v1/ai/generatewithAI": {
             "post": {
                 "description": "Generate with AI",
@@ -157,6 +189,38 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ApplicationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/initializ/v1/ai/painpoints/{id}": {
+            "delete": {
+                "description": "Delete Pain Points and Value Proposition by ID",
+                "tags": [
+                    "Pain Points Apis"
+                ],
+                "summary": "Delete Pain Points and Value Proposition by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pain Points ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ApplicationResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/responses.ApplicationResponse"
                         }

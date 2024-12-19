@@ -111,6 +111,27 @@ paths:
       summary: Save Case Study
       tags:
       - Case Study Apis
+  /initializ/v1/ai/casestudy/{id}:
+    delete:
+      description: Delete Case Study by ID
+      parameters:
+      - description: Case Study ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ApplicationResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ApplicationResponse'
+      summary: Delete Case Study by ID
+      tags:
+      - Case Study Apis
   /initializ/v1/ai/generatewithAI:
     post:
       description: Generate with AI
@@ -161,6 +182,27 @@ paths:
           schema:
             $ref: '#/definitions/responses.ApplicationResponse'
       summary: Save Pain Points and Value Proposition
+      tags:
+      - Pain Points Apis
+  /initializ/v1/ai/painpoints/{id}:
+    delete:
+      description: Delete Pain Points and Value Proposition by ID
+      parameters:
+      - description: Pain Points ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ApplicationResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ApplicationResponse'
+      summary: Delete Pain Points and Value Proposition by ID
       tags:
       - Pain Points Apis
   /initializ/v1/ai/prompt/{promptId}:
