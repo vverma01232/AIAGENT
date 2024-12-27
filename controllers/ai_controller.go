@@ -3,6 +3,7 @@ package controllers
 import (
 	"aiagent/models"
 	"aiagent/responses"
+	"aiagent/services"
 	"bufio"
 	"bytes"
 	"encoding/json"
@@ -28,47 +29,14 @@ func GeneratewithAIHandler() gin.HandlerFunc {
 		ctx.BindJSON(&body)
 
 		if body.TODOResearch {
-			scrapperUrl := os.Getenv("SCRAPPERURI")
-			scrapeBody := map[string]string{
-				"url": body.Linkedin_url,
-			}
-			reqbodyBytes, _ := json.Marshal(scrapeBody)
-			req, err := http.NewRequest("POST", scrapperUrl+"/scrape", bytes.NewBuffer(reqbodyBytes))
+			scrapedData, err := services.ScrapeData(body.Linkedin_url)
 			if err != nil {
-				ReturnResponse(ctx, http.StatusBadRequest, "Error occured while making the scrape req.", nil)
-				return
-			}
-			resp, err := http.DefaultClient.Do(req)
-			if err != nil {
-				ReturnResponse(ctx, http.StatusBadRequest, "Error occured while generating the response.", nil)
-				return
-			}
-			if resp.StatusCode != http.StatusOK {
-				ReturnResponse(ctx, http.StatusBadRequest, "Error occured while reseraching.", err)
-				return
-			}
-			var ScrapeResponse struct {
-				Choices []struct {
-					Message struct {
-						Content string `json:"content"`
-					} `json:"message"`
-				} `json:"choices"`
-			}
-
-			scrapeResbody, err := io.ReadAll(resp.Body)
-			if err != nil {
-				ReturnResponse(ctx, http.StatusBadRequest, "Error occurred while reading the response body.", nil)
+				ReturnResponse(ctx, http.StatusBadRequest, "Error occurred while scraping the URL: "+err.Error(), nil)
 				return
 			}
 
-			err = json.Unmarshal(scrapeResbody, &ScrapeResponse)
-			if err != nil {
-				ReturnResponse(ctx, http.StatusBadRequest, "Error occurred while reading the response body.", nil)
-				return
-			}
-			reserachedData := ScrapeResponse.Choices[0].Message.Content
-			body.Task = strings.ReplaceAll(body.Task, "**research**", reserachedData)
-			defer resp.Body.Close()
+			// Replace the placeholder with the scraped data
+			body.Task = strings.ReplaceAll(body.Task, "**research**", scrapedData)
 		}
 		modelUri := os.Getenv("MODELURI")
 		var modelConfig models.ModelConfig
@@ -102,7 +70,7 @@ func GeneratewithAIHandler() gin.HandlerFunc {
 		// Check for streaming
 		if modelConfig.Stream {
 			ctx.Header("Content-Type", "text/event-stream")
-			// Stream the response from OLLAMA API to the client
+			// Stream the response from Model API to the client
 			scanner := bufio.NewScanner(resp.Body)
 			for scanner.Scan() {
 				chunk := scanner.Text()

@@ -284,11 +284,11 @@ paths:
       - Prompt Apis
   /initializ/v1/ai/upload:
     post:
-      description: Upload Excel File
+      description: Upload Excel File in Base 64 format
       parameters:
-      - description: File Data in base64 encoded
+      - description: File metadata
         in: body
-        name: UploadExcel
+        name: metadata
         required: true
         schema:
           $ref: '#/definitions/models.UploadRequest'

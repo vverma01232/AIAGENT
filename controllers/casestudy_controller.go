@@ -4,12 +4,9 @@ import (
 	"aiagent/models"
 	"aiagent/repository"
 	"aiagent/responses"
-	"bytes"
+	"aiagent/services"
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -27,48 +24,16 @@ import (
 func SaveCaseStudy(caseStudyRepo repository.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var body models.CaseStudy
-		c.BindJSON(&body)
-		scrapperUrl := os.Getenv("SCRAPPERURI")
-		scrapperBody := map[string]string{
-			"url": body.URL,
+		if err := c.BindJSON(&body); err != nil {
+			ReturnResponse(c, http.StatusBadRequest, "Invalid input", nil)
+			return
 		}
-		reqbodyBytes, _ := json.Marshal(scrapperBody)
-		req, err := http.NewRequest("POST", scrapperUrl+"/scrape", bytes.NewBuffer(reqbodyBytes))
+		// Call the scrapeData function to get the scraped content
+		researchedData, err := services.ScrapeData(body.URL)
 		if err != nil {
-			ReturnResponse(c, http.StatusBadRequest, "Error", nil)
+			ReturnResponse(c, http.StatusBadRequest, "Error occurred while scraping the data", nil)
 			return
 		}
-		req.Header.Set("Content-type", "application/json")
-
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			ReturnResponse(c, http.StatusBadRequest, "Error occured while generating the response.", nil)
-			return
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			ReturnResponse(c, http.StatusBadRequest, "Error occured while reseraching.", err)
-			return
-		}
-		var ScrapeResponse struct {
-			Choices []struct {
-				Message struct {
-					Content string `json:"content"`
-				} `json:"message"`
-			} `json:"choices"`
-		}
-		scrapeResbody, err := io.ReadAll(resp.Body)
-		if err != nil {
-			ReturnResponse(c, http.StatusBadRequest, "Error occurred while reading the response body.", nil)
-			return
-		}
-
-		err = json.Unmarshal(scrapeResbody, &ScrapeResponse)
-		if err != nil {
-			ReturnResponse(c, http.StatusBadRequest, "Error occurred while reading the response body.", nil)
-			return
-		}
-		researchedData := ScrapeResponse.Choices[0].Message.Content
 		caseStudy := models.CaseStudy{
 			URL:            body.URL,
 			ResearchedData: researchedData,

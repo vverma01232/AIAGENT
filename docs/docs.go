@@ -348,7 +348,7 @@ const docTemplate = `{
         },
         "/initializ/v1/ai/upload": {
             "post": {
-                "description": "Upload Excel File",
+                "description": "Upload Excel File in Base 64 format",
                 "produces": [
                     "application/json"
                 ],
@@ -358,8 +358,8 @@ const docTemplate = `{
                 "summary": "Upload Excel File",
                 "parameters": [
                     {
-                        "description": "File Data in base64 encoded",
-                        "name": "UploadExcel",
+                        "description": "File metadata",
+                        "name": "metadata",
                         "in": "body",
                         "required": true,
                         "schema": {

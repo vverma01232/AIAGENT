@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // GetPrompts				godoc
@@ -22,8 +23,9 @@ import (
 // @Router					/initializ/v1/ai/prompts [GET]
 func GetPrompts(aIPromptsRepo repository.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-
-		cursor, err := aIPromptsRepo.Find(bson.M{})
+		findOptions := options.Find()
+		findOptions.SetSort(bson.M{"created_at": -1})
+		cursor, err := aIPromptsRepo.FindWithOption(bson.M{}, findOptions)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, responses.ApplicationResponse{
 				Status:  http.StatusBadRequest,

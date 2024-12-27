@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Prompts struct {
 	ID         string    `bson:"_id,omitempty" json:"id"`
@@ -15,16 +17,17 @@ type Prompts struct {
 }
 
 type UserDetails struct {
-	Name                  string `bson:"name" json:"name"`
-	Experience            string `bson:"experience" json:"experience"`
-	Location              string `bson:"location" json:"location"`
-	MobileNo              string `bson:"mob_no" json:"mob_no"`
-	Email                 string `bson:"email" json:"email"`
-	CompanyDetails        string `bson:"company" json:"company"`
-	Designation           string `bson:"designation" json:"designation"`
-	LinkedInProfileUrl    string `bson:"linkedin_url" json:"linkedin_url"`
-	LinkedInProfileData   string `bson:"linkedIn_data" json:"linkedIn_data"`
-	CompanyResearchedData string `bson:"company_data" json:"company_data"`
+	Name                  string       `bson:"name" json:"name"`
+	Experience            string       `bson:"experience" json:"experience"`
+	Location              string       `bson:"location" json:"location"`
+	MobileNo              string       `bson:"mob_no" json:"mob_no"`
+	Email                 string       `bson:"email" json:"email"`
+	CompanyDetails        string       `bson:"company" json:"company"`
+	Designation           string       `bson:"designation" json:"designation"`
+	LinkedInProfileUrl    string       `bson:"linkedin_url" json:"linkedin_url"`
+	LinkedInProfileData   string       `bson:"linkedIn_data" json:"linkedIn_data"`
+	CompanyResearchedData string       `bson:"company_data" json:"company_data"`
+	AiOutput              UserAiOutput `bson:"ai_output" json:"ai_output"`
 }
 
 type GenerateAIBody struct {
