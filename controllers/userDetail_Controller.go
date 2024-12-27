@@ -22,6 +22,7 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // UploadExcel				godoc
@@ -206,7 +207,8 @@ func replacePlaceholders(prompt string, user models.UserDetails) string {
 // @Router					/initializ/v1/ai/allusers [GET]
 func GetAllUserData(userDataRepo repository.Repository) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		cursor, err := userDataRepo.Find(bson.M{})
+		findOptions := options.Find().SetSort(bson.D{{Key: "ai_output.coldcalls.generatedat", Value: -1}})
+		cursor, err := userDataRepo.FindWithOption(bson.M{}, findOptions)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, responses.ApplicationResponse{
 				Status:  http.StatusBadRequest,

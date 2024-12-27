@@ -12,10 +12,12 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // GetPainPoints				godoc
@@ -28,7 +30,8 @@ import (
 func GetPainPoints(painPointRepo repository.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := context.TODO()
-		cursor, err := painPointRepo.Find(bson.M{})
+		findOptions := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+		cursor, err := painPointRepo.FindWithOption(bson.M{}, findOptions)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, responses.ApplicationResponse{
 				Status:  http.StatusBadRequest,
@@ -161,6 +164,7 @@ func SavePainPoints(painPointRepo repository.Repository, painPoints, valuePropos
 		Role:             role,
 		PainPoint:        painPoints,
 		ValueProposition: valueProposition,
+		CreatedAt:        time.Now(),
 	}
 
 	// Insert the pain point into the database
