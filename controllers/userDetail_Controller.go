@@ -53,7 +53,7 @@ func UploadExcel(userDataRepo repository.Repository, promptRepo repository.Repos
 			})
 			return
 		}
-		excel, err := excelize.OpenReader(strings.NewReader(string(data)))
+		excel, err := excelize.OpenReader(bytes.NewReader(data))
 		if err != nil {
 			log.Error("Failed to Read Excel Sheet", err)
 			ctx.JSON(http.StatusBadRequest, responses.ApplicationResponse{
@@ -62,21 +62,44 @@ func UploadExcel(userDataRepo repository.Repository, promptRepo repository.Repos
 			})
 			return
 		}
-
+		// Read the header row to get the column names
+		rows := excel.GetRows("Sheet1")
+		headerRow := rows[0]
+		headerMap := make(map[string]int)
+		for idx, header := range headerRow {
+			headerMap[strings.ToLower(strings.TrimSpace(header))] = idx
+		}
 		for i, row := range excel.GetRows("Sheet1") {
 			if i == 0 {
 				continue
 			} else {
 				// Prepare the user details
-				user := models.UserDetails{
-					Name:               row[1],
-					Experience:         row[2],
-					Location:           row[3],
-					MobileNo:           row[4],
-					Email:              row[5],
-					Designation:        row[6],
-					CompanyDetails:     row[7],
-					LinkedInProfileUrl: row[8],
+				user := models.UserDetails{}
+
+				// Dynamically map columns to UserDetails struct fields
+				if index, exists := headerMap["name"]; exists {
+					user.Name = row[index]
+				}
+				if index, exists := headerMap["experience"]; exists {
+					user.Experience = row[index]
+				}
+				if index, exists := headerMap["location"]; exists {
+					user.Location = row[index]
+				}
+				if index, exists := headerMap["mobile no"]; exists {
+					user.MobileNo = row[index]
+				}
+				if index, exists := headerMap["email"]; exists {
+					user.Email = row[index]
+				}
+				if index, exists := headerMap["designation"]; exists {
+					user.Designation = row[index]
+				}
+				if index, exists := headerMap["company"]; exists {
+					user.CompanyDetails = row[index]
+				}
+				if index, exists := headerMap["linkedin url"]; exists {
+					user.LinkedInProfileUrl = row[index]
 				}
 				var wg sync.WaitGroup
 				wg.Add(1)
