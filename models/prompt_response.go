@@ -27,6 +27,7 @@ type UserDetails struct {
 	LinkedInProfileUrl    string       `bson:"linkedin_url" json:"linkedin_url"`
 	LinkedInProfileData   string       `bson:"linkedIn_data" json:"linkedIn_data"`
 	CompanyResearchedData string       `bson:"company_data" json:"company_data"`
+	CompanyWebsite        string       `json:"company_website" bson:"company_website"`
 	AiOutput              UserAiOutput `bson:"ai_output" json:"ai_output"`
 }
 

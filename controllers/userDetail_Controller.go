@@ -33,7 +33,7 @@ import (
 // @Produce					application/json
 // @Success					200 {object} responses.ApplicationResponse{}
 // @Router					/initializ/v1/ai/upload [POST]
-func UploadExcel(userDataRepo repository.Repository, promptRepo repository.Repository) gin.HandlerFunc {
+func UploadExcel(userDataRepo repository.Repository, promptRepo repository.Repository, painPointRepo repository.Repository) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req models.UploadRequest
 		if err := ctx.BindJSON(&req); err != nil {
@@ -101,6 +101,9 @@ func UploadExcel(userDataRepo repository.Repository, promptRepo repository.Repos
 				if index, exists := headerMap["linkedin url"]; exists {
 					user.LinkedInProfileUrl = row[index]
 				}
+				if index, exists := headerMap["company url"]; exists {
+					user.CompanyWebsite = row[index]
+				}
 				var wg sync.WaitGroup
 				wg.Add(1)
 				go func(user *models.UserDetails) {
@@ -115,9 +118,21 @@ func UploadExcel(userDataRepo repository.Repository, promptRepo repository.Repos
 				wg.Add(1)
 				go func(user *models.UserDetails) {
 					defer wg.Done()
-					parts := strings.Split(user.Email, "@")
-					if len(parts) > 1 {
-						companyUrl := "https://www." + parts[1]
+					var companyUrl string
+
+					// If the company website exists, use it
+					if len(user.CompanyWebsite) > 0 {
+						companyUrl = user.CompanyWebsite
+					} else {
+						// Otherwise, construct the URL using the email domain
+						parts := strings.Split(user.Email, "@")
+						if len(parts) > 1 {
+							companyUrl = "https://www." + parts[1]
+						}
+					}
+
+					// Scrape company data using the URL
+					if len(companyUrl) > 0 {
 						companyDescription, err := services.ScrapeData(companyUrl)
 						if err != nil {
 							log.Warn("Error fetching company data for", user.CompanyDetails, ":", err)
@@ -126,6 +141,7 @@ func UploadExcel(userDataRepo repository.Repository, promptRepo repository.Repos
 						}
 					}
 				}(&user)
+
 				// Fetch prompts from the database
 				prompts, err := fetchPrompts()
 				if err != nil {
@@ -137,7 +153,7 @@ func UploadExcel(userDataRepo repository.Repository, promptRepo repository.Repos
 					return
 				}
 				// Generate AI Output for the user
-				userAiOutput := generateAiOutput(user, prompts)
+				userAiOutput := generateAiOutput(user, prompts, painPointRepo)
 				user.AiOutput = userAiOutput
 
 				_, err = userDataRepo.InsertOne(user)
@@ -176,11 +192,11 @@ func fetchPrompts() (map[string]models.Prompts, error) {
 }
 
 // generates AI outputs for Cold Calls, AI Research, and Question-Based Email using fetched prompts
-func generateAiOutput(user models.UserDetails, prompts map[string]models.Prompts) models.UserAiOutput {
+func generateAiOutput(user models.UserDetails, prompts map[string]models.Prompts, painPointRepo repository.Repository) models.UserAiOutput {
 	// Replace placeholders in the prompts
-	coldCallOutput, _ := performResearchUsingPrompt(replacePlaceholders(prompts["Cold Calls"].Prompt, user), prompts["Cold Calls"].PromptRule)
-	aiResearchOutput, _ := performResearchUsingPrompt(replacePlaceholders(prompts["AI Research"].Prompt, user), prompts["AI Research"].PromptRule)
-	questionBasedEmailOutput, _ := performResearchUsingPrompt(replacePlaceholders(prompts["Question Based Email"].Prompt, user), prompts["Question Based Email"].PromptRule)
+	coldCallOutput, _ := performResearchUsingPrompt(replacePlaceholders(prompts["Cold Calls"].Prompt, user, painPointRepo), prompts["Cold Calls"].PromptRule)
+	aiResearchOutput, _ := performResearchUsingPrompt(replacePlaceholders(prompts["AI Research"].Prompt, user, painPointRepo), prompts["AI Research"].PromptRule)
+	questionBasedEmailOutput, _ := performResearchUsingPrompt(replacePlaceholders(prompts["Question Based Email"].Prompt, user, painPointRepo), prompts["Question Based Email"].PromptRule)
 
 	return models.UserAiOutput{
 		ColdCalls: models.AiGenerated{
@@ -199,13 +215,18 @@ func generateAiOutput(user models.UserDetails, prompts map[string]models.Prompts
 }
 
 // replacing placeholders in the prompt with actual user data
-func replacePlaceholders(prompt string, user models.UserDetails) string {
+func replacePlaceholders(prompt string, user models.UserDetails, painPointRepo repository.Repository) string {
 	firstName := ""
 	if len(user.Name) > 0 {
 		parts := strings.Fields(user.Name)
 		if len(parts) > 0 {
 			firstName = parts[0]
 		}
+	}
+
+	valueProposition, err := GetPainPointsForRole(painPointRepo, user.Designation)
+	if err != nil {
+		return "At Initializ.ai, we provide a unified platform designed to streamline and simplify the entire lifecycle of cloud-native and AI applications. Our solutions address the complexity of managing modern application infrastructure while enhancing security, deployment efficiency, and developer productivity. Whether you're looking to build, secure, deploy, or optimize your applications, Initializ.ai offers an all-in-one platform that reduces operational overhead and accelerates innovation."
 	}
 
 	// Replace placeholders in the prompt
@@ -216,8 +237,14 @@ func replacePlaceholders(prompt string, user models.UserDetails) string {
 	prompt = strings.Replace(prompt, "**Location**", user.Location, -1)
 	prompt = strings.Replace(prompt, "**company**", user.CompanyDetails, -1)
 	prompt = strings.Replace(prompt, "**linkedin_profile**", user.LinkedInProfileUrl, -1)
+	prompt = strings.Replace(prompt, "**company_website_data**", user.CompanyResearchedData, -1)
+	prompt = strings.Replace(prompt, "**sender_value_propositions**", valueProposition, -1)
+	prompt = strings.Replace(prompt, "**AI Research**", user.AiOutput.AiResearch.AiGeneratedOutpt, -1)
+	prompt = strings.Replace(prompt, "**language**", "English", -1)
+	prompt = strings.Replace(prompt, "**tone**", "Conversational", -1)
 	prompt = strings.Replace(prompt, "**sender_company**", "initializ.ai", -1)
 	prompt = strings.Replace(prompt, "**sender_first_name**", "Yash", -1)
+
 	return prompt
 }
 
@@ -327,4 +354,13 @@ func performResearchUsingPrompt(prompt string, promptRule string) (string, error
 	}
 
 	return "", fmt.Errorf("no response content found")
+}
+
+func GetPainPointsForRole(painPointRepo repository.Repository, role string) (string, error) {
+	var painPoint models.PainPointModel
+	err := painPointRepo.FindOne(bson.M{"role": role}).Decode(&painPoint)
+	if err != nil {
+		return "", fmt.Errorf("error fetching pain points for role %s: %v", role, err)
+	}
+	return painPoint.ValueProposition, nil
 }
