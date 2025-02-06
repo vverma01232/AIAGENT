@@ -62,23 +62,25 @@ func UploadExcel(userDataRepo repository.Repository, promptRepo repository.Repos
 			})
 			return
 		}
-		// Read the header row to get the column names
+		// Reading header row to get the column names
 		rows := excel.GetRows("Sheet1")
 		headerRow := rows[0]
 		headerMap := make(map[string]int)
 		for idx, header := range headerRow {
 			headerMap[strings.ToLower(strings.TrimSpace(header))] = idx
 		}
+
 		for i, row := range excel.GetRows("Sheet1") {
 			if i == 0 {
 				continue
 			} else {
-				// Prepare the user details
+				// Prepareing the user details
 				user := models.UserDetails{}
 
 				// Dynamically map columns to UserDetails struct fields
 				if index, exists := headerMap["name"]; exists {
-					user.Name = row[index]
+					user.Name = strings.TrimSpace(row[index])
+					log.Print(user.Name)
 				}
 				if index, exists := headerMap["experience"]; exists {
 					user.Experience = row[index]
@@ -93,7 +95,8 @@ func UploadExcel(userDataRepo repository.Repository, promptRepo repository.Repos
 					user.Email = row[index]
 				}
 				if index, exists := headerMap["designation"]; exists {
-					user.Designation = row[index]
+					user.Designation = strings.TrimSpace(row[index])
+					log.Print(user.Designation)
 				}
 				if index, exists := headerMap["company"]; exists {
 					user.CompanyDetails = row[index]
@@ -104,9 +107,10 @@ func UploadExcel(userDataRepo repository.Repository, promptRepo repository.Repos
 				if index, exists := headerMap["company url"]; exists {
 					user.CompanyWebsite = row[index]
 				}
+
 				var wg sync.WaitGroup
-				wg.Add(1)
-				go func(user *models.UserDetails) {
+				wg.Add(2)
+				go func() {
 					defer wg.Done()
 					linkedinData, err := services.ScrapeData(user.LinkedInProfileUrl)
 					if err != nil {
@@ -114,24 +118,24 @@ func UploadExcel(userDataRepo repository.Repository, promptRepo repository.Repos
 					} else {
 						user.LinkedInProfileData = linkedinData
 					}
-				}(&user)
-				wg.Add(1)
-				go func(user *models.UserDetails) {
-					defer wg.Done()
-					var companyUrl string
+				}()
 
-					// If the company website exists, use it
-					if len(user.CompanyWebsite) > 0 {
-						companyUrl = user.CompanyWebsite
-					} else {
-						// Otherwise, construct the URL using the email domain
-						parts := strings.Split(user.Email, "@")
-						if len(parts) > 1 {
-							companyUrl = "https://www." + parts[1]
-						}
+				var companyUrl string
+
+				// If the company website exists, use it
+				if len(user.CompanyWebsite) > 0 {
+					companyUrl = user.CompanyWebsite
+				} else {
+					// Otherwise, construct the URL using the email domain
+					parts := strings.Split(user.Email, "@")
+					if len(parts) > 1 {
+						companyUrl = "https://www." + parts[1]
 					}
+				}
 
-					// Scrape company data using the URL
+				// Scrape company data using the URL
+				go func() {
+					defer wg.Done()
 					if len(companyUrl) > 0 {
 						companyDescription, err := services.ScrapeData(companyUrl)
 						if err != nil {
@@ -140,8 +144,8 @@ func UploadExcel(userDataRepo repository.Repository, promptRepo repository.Repos
 							user.CompanyResearchedData = companyDescription
 						}
 					}
-				}(&user)
-
+				}()
+				wg.Wait()
 				// Fetch prompts from the database
 				prompts, err := fetchPrompts()
 				if err != nil {
@@ -176,16 +180,16 @@ func fetchPrompts() (map[string]models.Prompts, error) {
 
 	promptMap := map[string]models.Prompts{
 		"Cold Calls": {
-			Prompt:     "Create a brief, natural-sounding icebreaker for a cold call to **first_name**, **title** at **company** . Use the provided research to inform your approach, focusing on a relevant pain point that our service can address. The goal is to sound human and conversational while still being direct about the purpose of the call. ---Start of Research Information--- **AI Research** (Managed By Initializ) ---End of Research Information--- Guidelines: Start with a brief, friendly greeting. Mention your **sender_name** and **sender_company**. Ask if they have a moment to talk about a specific pain point or challenge related to their role or industry. The pain point should be directly related to a service or solution your company offers. Keep it brief - aim for 2-3 sentences maximum. Use natural language and avoid jargon or overly formal phrasing. Be prepared to elaborate on the pain point if given permission to continue. Example format (but feel free to vary): 'Hi **first_name** , this is **sender_first_name** from **sender_company** . Do you have a quick moment to discuss [specific pain point related to prospect's role or recent company development]?' If given permission to continue: Briefly elaborate on the pain point, relating it to the prospect's specific situation or a recent industry trend. Then, ask an open-ended question to encourage dialogue. Remember, the goal is to quickly establish relevance and open a conversation about how your service can address their specific challenges.",
+			Prompt:     "Create a brief, natural-sounding icebreaker for a cold call to **first_name**, **title** at **company** . Use the provided research to inform your approach, focusing on a relevant pain point that our service can address. The goal is to sound human and conversational while still being direct about the purpose of the call. ---Start of Research Information--- **AI_Research** (Managed By Initializ) ---End of Research Information--- Guidelines: Start with a brief, friendly greeting. Mention your **sender_name** and **sender_company**. Ask if they have a moment to talk about a specific pain point or challenge related to their role or industry. The pain point should be directly related to a service or solution your company offers.Use **sendercompanydetails** as your company details. Keep it brief - aim for 2-3 sentences maximum. Use natural language and avoid jargon or overly formal phrasing. Be prepared to elaborate on the pain point if given permission to continue. Example format (but feel free to vary): 'Hi **first_name** , this is **sender_first_name** from **sender_company** . Do you have a quick moment to discuss [specific pain point related to prospect's role or recent company development]?' If given permission to continue: Briefly elaborate on the pain point, relating it to the prospect's specific situation or a recent industry trend. Then, ask an open-ended question to encourage dialogue. Remember, the goal is to quickly establish relevance and open a conversation about how your service can address their specific challenges.",
 			PromptRule: "Use ONLY information explicitly stated in the provided research. Do not add any details or make any inferences not directly supported by the research.Only output the script not any descriptive headings. Do not output quotation/speech marks. If the research doesn't provide enough information for a specific point, use a phrase like 'Based on the information available to me...' and stick to what you know for certain.Keep the entire icebreaker under 20 seconds when spoken aloud. Do not use industry jargon unless it's specifically mentioned in the research as relevant to this prospect. Be prepared to say 'I don't have enough information about that' if asked about something not covered in the research. Do not attempt to fill in gaps in the research with assumptions or generalizations.If referencing any statistics or specific claims, only use those explicitly stated in the research.The open-ended question must be directly related to information provided in the research.If the research doesn't provide a clear pain point or value proposition, default to a more general, research-based question about their role or industry.",
 		},
 		"AI Research": {
-			Prompt:     "[Here is your task]:You are an experienced Sales Development Representative (SDR) at **sender_company**. Your goal is to research and create a personalized outreach strategy for **first_name** , a **title** at **company**. Use the information provided to craft a detailed, relevant summary that will help engage this prospect effectively. Your analysis should be insightful, demonstrating a deep understanding of both **sender_company**'s offerings and the prospect's potential needs.Analyze Context: Briefly summarize **first_name** s role as **title** at **company** , including industry and potential. When describing **first_name**  current role and activities, ensure you are referencing their most recent active experience as listed on their LinkedIn profile, which should be indicated by a date range ending with 'present' . Do not use information from older positions unless explicitly relevant to the current analysisIdentify Key Challenges: List 3 challenges **company** likely faces, based on our value propositions for **title** below focusing on areas **sender_company**  can address, based on our value propositions below. Focus on challenges specific to **first_name**  role as **title** , using the provided source data to identify role-specific priorities & symptoms of challenges. Ensure these solely align with the value propositions below.Present **sender_company**  Solutions: For each challenge, explain how **sender_company**  a. Addresses the specific need challenges b. Highlights a benefit to company   c. Explains the benefit tocompany and **first_name**'s role. For each solution, provide hyper-specific language that demonstrate how **sender_company**  can improve an outcome for **company** (ensure this is completely factual). Use words not numbers to communicate this.Provide Concrete Example: Give one specific example of how **sender_company** could solve a unique challenge for company , based on their industry or structure. Ensure this example uses language and metrics highly specific to **first_name**'s role and industry, avoiding generic AI buzzwords.Recent Company News:Identify a recent newsworthy event or development specific to company  or **first_name**'s role. Ensure the news is from the last 6 months only. Briefly explain how this event might relate to the challenges or priorities identified earlier.[Use the following information as sources]:Linkedin profile: '**linkedin_profile** .'company website data: '**company_website_data** '**sender_company** value propositions here: '**sender_value_propositions** .",
+			Prompt:     "[Here is your task]:You are an experienced Sales Development Representative (SDR) at **sender_company**. Your goal is to research and create a personalized outreach strategy for **first_name** , a **title** at **company**. Use the information provided to craft a detailed, relevant summary that will help engage this prospect effectively. Your analysis should be insightful, demonstrating a deep understanding of both **sender_company**'s offerings and the prospect's potential needs.Analyze Context: Briefly summarize **first_name** s role as **title** at **company** , including industry and potential. When describing **first_name**  current role and activities, ensure you are referencing their most recent active experience as listed on their LinkedIn profile, which should be indicated by a date range ending with 'present' . Do not use information from older positions unless explicitly relevant to the current analysis /n Identify Key Challenges: List 3 challenges **company** likely faces, based on our value propositions for **title** below focusing on areas **sender_company**  can address, based on our value propositions below. Focus on challenges specific to **first_name**  role as **title** , using the provided source data to identify role-specific priorities & symptoms of challenges. Ensure these solely align with the value propositions below.Present **sender_company**  Solutions: For each challenge, explain how **sender_company**  a. Addresses the specific need challenges b. Highlights a benefit to **company**  c. Explains the benefit to **company** and **first_name**'s role. For each solution, provide hyper-specific language that demonstrate how **sender_company**  can improve an outcome for **company** (ensure this is completely factual). Use words not numbers to communicate this. /n Provide Concrete Example: Give one specific example of how **sender_company** could solve a unique challenge for **company** , based on their industry or structure. Ensure this example uses language and metrics highly specific to **first_name**'s role and industry, avoiding generic AI buzzwords. /n Recent Company News:Identify a recent newsworthy event or development specific to company  or **first_name**'s role. Ensure the news is from the last 6 months only. Briefly explain how this event might relate to the challenges or priorities identified earlier.[Use the following information as sources]:Linkedin profile: '**linkedin_profile** .'**company** website data: '**company_website_data** '**sender_company** value propositions here: '**sender_value_propositions**.Use **sendercompanydetails** for sender company details .",
 			PromptRule: "You are a top marketing/sales agent with outstanding account research and email writing skills. Your attention to detail and communication expertise drive excellent results and strong client relationships. You are adaptable, empathetic, and relentlessly goal-oriented.Ensure the google news used it from the last 3 months only. Use language that resonates with first_name  based on their priorities.Ensure every point references how it benefits company , linked to the client types.Avoid generic language and provide specific, personalized details. Do not format with any * or # ",
 		},
 		"Question Based Email": {
-			Prompt:     "As a representative from **sender_company** , craft a highly personalized email to **first_name** , **title**  at company. Utilize the provided research information, including biometrics, to identify top priorities, challenges, and relevant KPIs specific to **first_name**'s role and industry.Critical Rules:Strictly output in **language** language.Use a **tone** toneThe length of the email should be maximum **length** words[RESEARCH INFORMATION]: 'AI Research (Managed By Initializ)' [/ RESEARCH INFORMATION]Format:Greet with their first name - **first_name** Open with an observation or news hook directly relevant to company or **first_name**'s current situation. (Naturalize the language)Transition into a thought-provoking question that connects your opening to a specific challenge or priority you've identified for **first_name**'s role.Present a hyper-specific value proposition addressing this challenge. Use role-specific language and metrics to clearly demonstrate how **sender_company** can measurably improve a key metric or outcome for company.Craft a call-to-action focused on how **sender_company**  can help improve **first_name**'s current process related to the challenge discussed.Sign off professionally with - **sender_first_name** P.S. Include a brief, personalized comment referencing **first_name**  and an insight from your research, with a subtle touch of humor. DO NOT talk about location. Limit to one sentence.",
-			PromptRule: "Tone: Informal, conversational, and non-salesy.Length: Maximum 100 words, preferably under 90.Personalization: Ensure all content is highly relevant and tailored to first_name's specific role, industry, and current situation. Demonstrate a deep understanding of their challenges and priorities.Language:Prioritize 'you' language to focus on the prospect.Use language and metrics hyper-specific to first_name 's job function and challenges.Avoid generic AI buzzwords, overly technical jargon, and generic industry trends.Content:Focus more on the prospect's company than on sender_company.Avoid phrases like 'At company' or 'I hope this message finds you well.'Don't use flattery or over-complimentary language (e.g., 'truly impressive,' 'truly remarkable').Omit any references to working with similar brands or social proof.Structure:Use line breaks between sentences for readability.Don't use company name suffixes (LTD, PLC, INC).Do not:Describe your own feelings. Instead, provide a descriptive perspective.Offer invitations (e.g., for drinks) in the P.S. line.Mention the weather.List sources or reference the research process.Demonstrate a nuanced understanding of first_name's current processes and how sender_company  can improve them.Do not write a greetingUse more 'you' language.Never say At company Reference more about the company than us.Put a lot of whitespace between each sentence, which is a line gap, so it looks spaced outDo not put any company name suffixes like LTD, PLC, INC, you are writing an email to first_name who works at company . The email should be maximum 120 words. Under 100 words is preferable.Never say - I hope this message finds you well.Do not list sources. Use social intelligence to write a professional and succinct email. Do not describe how you feel. Instead provide a descriptive perspective. For example, avoid flattery and being over-complimentary. For example, 'truly impressive', 'truly remarkable', 'truly game-changer', 'truly inspiring', and similar should be completely avoided. ",
+			Prompt:     "As a representative from **sender_company** , craft a highly personalized email to **first_name** , **title**  at company. Utilize the provided research information, including biometrics, to identify top priorities, challenges, and relevant KPIs specific to **first_name**'s role and industry.Critical Rules:Strictly output in **language** language.Use a **tone** tone The length of the email should be maximum **length** words[RESEARCH INFORMATION]: '**AI_Research** (Managed By Initializ)' [/ RESEARCH INFORMATION]Format:Greet with their first name - **first_name** Open with an observation or news hook directly relevant to company or **first_name**'s current situation. (Naturalize the language)Transition into a thought-provoking question that connects your opening to a specific challenge or priority you've identified for **first_name**'s role.Present a hyper-specific value proposition addressing this challenge. Use role-specific language and metrics to clearly demonstrate how **sender_company** can measurably improve a key metric or outcome for company, use **sendercompanydetails** as sender company data  .Craft a call-to-action focused on how **sender_company**  can help improve **first_name**'s current process related to the challenge discussed.Sign off professionally with - **sender_first_name** P.S. Include a brief, personalized comment referencing **first_name**  and an insight from your research, with a subtle touch of humor. DO NOT talk about location. Limit to one sentence.",
+			PromptRule: "Tone: Informal, conversational, and non-salesy.Length: Maximum 100 words, preferably under 90.Personalization: Ensure all content is highly relevant and tailored to first_name's specific role, industry, and current situation. Demonstrate a deep understanding of their challenges and priorities.Language:Prioritize 'you' language to focus on the prospect.Use language and metrics hyper-specific to first_name 's job function and challenges.Avoid generic AI buzzwords, overly technical jargon, and generic industry trends.Content:Focus more on the prospect's company than on sender_company.Avoid phrases like 'At company' or 'I hope this message finds you well.'Don't use flattery or over-complimentary language (e.g., 'truly impressive,' 'truly remarkable').Omit any references to working with similar brands or social proof.Structure:Use line breaks between sentences for readability.Don't use company name suffixes (LTD, PLC, INC).Do not:Describe your own feelings. Instead, provide a descriptive perspective.Offer invitations (e.g., for drinks) in the P.S. line.Mention the weather.List sources or reference the research process.Demonstrate a nuanced understanding of **first_name**'s current processes and how sender_company  can improve them. Do not write a greetingUse more 'you' language.Never say At company Reference more about the company than us.Put a lot of whitespace between each sentence, which is a line gap, so it looks spaced outDo not put any company name suffixes like LTD, PLC, INC, you are writing an email to first_name who works at company . The email should be maximum 120 words. Under 100 words is preferable.Never say - I hope this message finds you well. Do not list sources. Use social intelligence to write a professional and succinct email. Do not describe how you feel. Instead provide a descriptive perspective. For example, avoid flattery and being over-complimentary. For example, 'truly impressive', 'truly remarkable', 'truly game-changer', 'truly inspiring', and similar should be completely avoided. ",
 		},
 	}
 	return promptMap, nil
@@ -193,10 +197,27 @@ func fetchPrompts() (map[string]models.Prompts, error) {
 
 // generates AI outputs for Cold Calls, AI Research, and Question-Based Email using fetched prompts
 func generateAiOutput(user models.UserDetails, prompts map[string]models.Prompts, painPointRepo repository.Repository) models.UserAiOutput {
-	// Replace placeholders in the prompts
-	coldCallOutput, _ := performResearchUsingPrompt(replacePlaceholders(prompts["Cold Calls"].Prompt, user, painPointRepo), prompts["Cold Calls"].PromptRule)
 	aiResearchOutput, _ := performResearchUsingPrompt(replacePlaceholders(prompts["AI Research"].Prompt, user, painPointRepo), prompts["AI Research"].PromptRule)
-	questionBasedEmailOutput, _ := performResearchUsingPrompt(replacePlaceholders(prompts["Question Based Email"].Prompt, user, painPointRepo), prompts["Question Based Email"].PromptRule)
+
+	var coldCallOutput, questionBasedEmailOutput string
+
+	//GoRoutines
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	// Cold Calls task
+	go func() {
+		defer wg.Done()
+		coldCallOutput, _ = performResearchUsingPrompt(replacePlaceholders(prompts["Cold Calls"].Prompt, user, painPointRepo), prompts["Cold Calls"].PromptRule)
+	}()
+
+	// Question Based Email task
+	go func() {
+		defer wg.Done()
+		questionBasedEmailOutput, _ = performResearchUsingPrompt(replacePlaceholders(prompts["Question Based Email"].Prompt, user, painPointRepo), prompts["Question Based Email"].PromptRule)
+	}()
+
+	wg.Wait()
 
 	return models.UserAiOutput{
 		ColdCalls: models.AiGenerated{
@@ -225,6 +246,7 @@ func replacePlaceholders(prompt string, user models.UserDetails, painPointRepo r
 	}
 
 	valueProposition, err := GetPainPointsForRole(painPointRepo, user.Designation)
+	log.Print(err)
 	if err != nil {
 		return "At Initializ.ai, we provide a unified platform designed to streamline and simplify the entire lifecycle of cloud-native and AI applications. Our solutions address the complexity of managing modern application infrastructure while enhancing security, deployment efficiency, and developer productivity. Whether you're looking to build, secure, deploy, or optimize your applications, Initializ.ai offers an all-in-one platform that reduces operational overhead and accelerates innovation."
 	}
@@ -239,12 +261,12 @@ func replacePlaceholders(prompt string, user models.UserDetails, painPointRepo r
 	prompt = strings.Replace(prompt, "**linkedin_profile**", user.LinkedInProfileUrl, -1)
 	prompt = strings.Replace(prompt, "**company_website_data**", user.CompanyResearchedData, -1)
 	prompt = strings.Replace(prompt, "**sender_value_propositions**", valueProposition, -1)
-	prompt = strings.Replace(prompt, "**AI Research**", user.AiOutput.AiResearch.AiGeneratedOutpt, -1)
+	prompt = strings.Replace(prompt, "**AI_Research**", user.AiOutput.AiResearch.AiGeneratedOutpt, -1)
 	prompt = strings.Replace(prompt, "**language**", "English", -1)
 	prompt = strings.Replace(prompt, "**tone**", "Conversational", -1)
 	prompt = strings.Replace(prompt, "**sender_company**", "initializ.ai", -1)
 	prompt = strings.Replace(prompt, "**sender_first_name**", "Yash", -1)
-
+	prompt = strings.Replace(prompt, "*sendercompanydetails**", "Initializ.ai appears to be a comprehensive platform offering solutions for developing, securing, and operating cloud-native and AI applications. Here's an overview of their services and the challenges they address: 1. Unified Platform for GenAI & Cloud-Native Apps: - Challenge: Complexity in managing the entire lifecycle of modern applications - Solution: Provides an all-in-one platform for building, deploying, and observing cloud-native and AI apps 2. Security Features: - Challenge: Ensuring application and infrastructure security throughout the development process - Solutions: a) Secure Container Building: Reduces attack surface, implements image signing and provenance validation b) Continuous Scanning & Remediation: Performs vulnerability scanning and auto-remediation for new CVEs c) AI-Driven Threat Management: Includes exploit probability assessment, vulnerability scanning, and compliance enforcement 3. Deployment Capabilities: - Challenge: Streamlining the deployment process across environments - Solutions: a) Instant Deployments: Supports deployment on their cloud, customer's cloud (BYOC), or on-premises b) Source Code to Running App: Automates building and running applications across TEST, STAGE & PROD environments c) Polyglot Support: Handles multiple languages and frameworks (Python, NodeJS, Java, Go & .NET) 4. AI Augmented Development: - Challenge: Enhancing developer productivity and integrating AI into the development process - Solutions: a) AI Augmented Development Environment b) Tooling integration with popular dev frameworks and IDEs c) Streamlined deployment workflows 5. Private AI Services: - Challenge: Deploying and managing AI models and services - Solutions: a) Support for various models (Llama 3, Whisper, Stable Diffusion, Custom Generative AI Models, LLMs) b) Pre-built AI inference apps c) Easy creation of new inference endpoints d) GPU and CPU fractioning for cost efficiency 6. Observability & AI-Ops: - Challenge: Monitoring and optimizing application performance - Solutions: a) Centralized logs, metrics & traces b) Intelligent monitoring & anomaly detection c) Predictive Analytics d) Auto Performance Improvement 7. Kubernetes Complexity Simplification: - Challenge: Managing the complexities of Kubernetes - Solution: Streamlined Kubernetes management (specific details not provided) 8. Collaboration and Reporting: - Challenge: Improving team collaboration and insights - Solutions: a) Advanced Reporting b) Alerts & Notifications c) Self-service capabilities d) Forecasting e) Data Import & Export While the provided information doesn't include specific quantitative data, Initializ.ai claims to offer significant benefits such as: - Reducing deployment failures and change failure rates - Improving application stability - Accelerating delivery times - Enabling faster experimentation The platform aims to streamline and simplify the entire application lifecycle, allowing development teams to focus on core business logic rather than infrastructure and operational concerns.", -1)
 	return prompt
 }
 
@@ -357,10 +379,12 @@ func performResearchUsingPrompt(prompt string, promptRule string) (string, error
 }
 
 func GetPainPointsForRole(painPointRepo repository.Repository, role string) (string, error) {
+
 	var painPoint models.PainPointModel
 	err := painPointRepo.FindOne(bson.M{"role": role}).Decode(&painPoint)
 	if err != nil {
-		return "", fmt.Errorf("error fetching pain points for role %s: %v", role, err)
+		GeneratePainPointsUsingAI(role)
 	}
+
 	return painPoint.ValueProposition, nil
 }

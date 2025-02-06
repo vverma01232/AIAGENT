@@ -76,59 +76,13 @@ func SaveAiResponseToDB(painPointRepo repository.Repository) gin.HandlerFunc {
 			return
 		}
 
-		modelUrl := os.Getenv("MODELURI")
-		var modelConfig models.ModelConfig
-		var message models.Message
-		message.Role = "system"
-		message.Content = `You are an expert assistant representing Initializ.ai, a platform specializing in developing, securing, and operating cloud-native and AI applications.\r\n \r\nInitializ.ai Overview:\r\n \r\n1. Unified Platform for GenAI & Cloud-Native Apps: Simplifies lifecycle management for modern apps.\r\n \r\n \r\n2. Security Features: Secure container building, continuous vulnerability scanning, AI-driven threat management.\r\n \r\n \r\n3. Deployment Capabilities: Instant deployments, automated pipelines, polyglot support (Python, NodeJS, Java, Go, .NET).\r\n \r\n \r\n4. AI Augmented Development: AI-enhanced environments, seamless tooling integration, deployment workflows.\r\n \r\n \r\n5. Private AI Services: Supports models like Llama, Whisper, and Stable Diffusion; GPU\/CPU cost efficiency.\r\n \r\n \r\n6. Observability & AI-Ops: Centralized logs, anomaly detection, predictive analytics, auto performance improvement.\r\n \r\n \r\n7. Kubernetes Simplification: Simplified Kubernetes management.\r\n \r\n \r\n8. Collaboration & Reporting: Advanced reporting, alerts, notifications, and forecasting.\r\n \r\n \r\n \r\nTask:\r\n \r\nWhen provided with a job title (e.g., Software Development Engineer, Project Manager) and Initializ.ai's values, your task is to:\r\n \r\n1. Identify key pain points for the given role.\r\n \r\n \r\n2. Explain how Initializ.ai addresses these pain points using its features.\r\n \r\n \r\n3. Integrate Initializ.ai's values\u2014simplification, security, innovation, and collaboration\u2014into the response.\r\n \r\n \r\n4. Provide a clear, professional response in 50 words or less.\r\n \r\n \r\n \r\nResponse Structure:\r\n \r\n1. Pain Points: List 1-2 challenges for the role.\r\n \r\n \r\n2. How Initializ Helps: Highlight 1-2 relevant Initializ.ai features.\r\n \r\n \r\n \r\nStay concise and ensure the response remains 50 words or less.\r\n\r\n#Guardrails\r\n1. Do  no generate any unwanted data\r\n2. Do no provide the the words count in response`
-		modelConfig.Messages = append(modelConfig.Messages, message)
-		message.Role = "user"
-		message.Content = apiResponseData.Role
-		modelConfig.Messages = append(modelConfig.Messages, message)
-		modelConfig.Model = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-		modelConfig.Stream = false
-		modelConfig.Temperature = 0.7
-		modelConfig.MaxTokens = 5000
-
-		modelBody, _ := json.Marshal(modelConfig)
-
-		req, err := http.NewRequest("POST", modelUrl, bytes.NewBuffer(modelBody))
+		// Call service to generate pain points
+		painPoints, valueProposition, err := GeneratePainPointsUsingAI(apiResponseData.Role)
 		if err != nil {
-			ReturnResponse(ctx, http.StatusBadRequest, "Error occured while generating the response.", nil)
-			return
-		}
-		req.Header.Set("Authorization", "Bearer "+os.Getenv("TOKEN"))
-		resp, err := http.DefaultClient.Do(req)
-		if http.StatusOK != resp.StatusCode {
-			ReturnResponse(ctx, http.StatusBadRequest, "Error occured while generating the response.", nil)
-			return
-		}
-		if err != nil {
-			ReturnResponse(ctx, http.StatusBadRequest, "Error occured while generating the response.", nil)
-			return
-		}
-		defer resp.Body.Close()
-		var ModelResponse struct {
-			Choices []struct {
-				Message struct {
-					Content string `json:"content"`
-				} `json:"message"`
-			} `json:"choices"`
-		}
-		resbody, err := io.ReadAll(resp.Body)
-		if err != nil {
-			ReturnResponse(ctx, http.StatusBadRequest, "Error occurred while reading the response body.", nil)
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error generating pain points: %v", err)})
 			return
 		}
 
-		err = json.Unmarshal(resbody, &ModelResponse)
-		if err != nil {
-			ReturnResponse(ctx, http.StatusBadRequest, "Error occurred while reading the response body.", nil)
-			return
-		}
-		reserachedData := ModelResponse.Choices[0].Message.Content
-		defer resp.Body.Close()
-		painPoints, valueProposition := splitContent(reserachedData)
 		// Save the content to the database
 		err = SavePainPoints(painPointRepo, painPoints, valueProposition, apiResponseData.Role)
 		if err != nil {
@@ -142,6 +96,58 @@ func SaveAiResponseToDB(painPointRepo repository.Repository) gin.HandlerFunc {
 		})
 	}
 }
+func GeneratePainPointsUsingAI(role string) (string, string, error) {
+	modelUrl := os.Getenv("MODELURI")
+	var modelConfig models.ModelConfig
+	var message models.Message
+	message.Role = "system"
+	message.Content = "You are an expert assistant representing Initializ.ai, a platform specializing in developing, securing, and operating cloud-native and AI applications.\r\n\r\nTask:\r\nWhen provided with a job title (e.g., Software Development Engineer, Project Manager), your task is to:\r\n\r\n1. Identify key pain points for the given role.\r\n\r\n2. Explain how Initializ.ai addresses these pain points using its features.\r\n\r\n3. Integrate Initializ.ai's values—simplification, security, innovation, and collaboration—into the response.\r\n\r\n4. Provide a clear, professional response in 50 words or less.\r\n"
+	modelConfig.Messages = append(modelConfig.Messages, message)
+	message.Role = "user"
+	message.Content = role
+	modelConfig.Messages = append(modelConfig.Messages, message)
+	modelConfig.Model = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+	modelConfig.Stream = false
+	modelConfig.Temperature = 0.7
+	modelConfig.MaxTokens = 5000
+
+	modelBody, _ := json.Marshal(modelConfig)
+
+	req, err := http.NewRequest("POST", modelUrl, bytes.NewBuffer(modelBody))
+	if err != nil {
+		return "", "", fmt.Errorf("error creating request: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+os.Getenv("TOKEN"))
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("error generating response from AI model: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var ModelResponse struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+
+	resbody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", "", fmt.Errorf("error reading response body: %v", err)
+	}
+
+	err = json.Unmarshal(resbody, &ModelResponse)
+	if err != nil {
+		return "", "", fmt.Errorf("error unmarshalling AI model response: %v", err)
+	}
+
+	generatedContent := ModelResponse.Choices[0].Message.Content
+	painPoints, valueProposition := splitContent(generatedContent)
+
+	return painPoints, valueProposition, nil
+}
+
 func splitContent(content string) (string, string) {
 	content = strings.ReplaceAll(content, "*", "")
 	content = strings.ReplaceAll(content, "How Initializ Helps:", "How Initializ.ai Helps:")
