@@ -112,7 +112,9 @@ func UploadExcel(userDataRepo repository.Repository, promptRepo repository.Repos
 				wg.Add(2)
 				go func() {
 					defer wg.Done()
-					linkedinData, err := services.ScrapeData(user.LinkedInProfileUrl)
+					linkedin := strings.Replace(user.LinkedInProfileUrl, "www", "in", -1)
+					log.Print(linkedin)
+					linkedinData, err := services.ScrapeData(linkedin)
 					if err != nil {
 						log.Warn("Error fetching LinkedIn data for", user.Name, ":", err)
 					} else {
