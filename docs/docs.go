@@ -289,8 +289,8 @@ const docTemplate = `{
                 "summary": "Save Prompt",
                 "parameters": [
                     {
-                        "description": "Upload the prompt in the Db",
-                        "name": "UploadExcel",
+                        "description": "Add the prompt in the Db",
+                        "name": "Prompt",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -328,7 +328,7 @@ const docTemplate = `{
                     },
                     {
                         "description": "Update the prompt in the Db",
-                        "name": "UploadExcel",
+                        "name": "Prompt",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -364,6 +364,37 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/models.UploadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ApplicationResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/initializ/v1/ai/user/delete": {
+            "delete": {
+                "description": "Delete Users by their Ids",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UserData Apis"
+                ],
+                "summary": "Delete Users",
+                "parameters": [
+                    {
+                        "description": "userid",
+                        "name": "UserId",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Users"
                         }
                     }
                 ],
@@ -455,6 +486,17 @@ const docTemplate = `{
             "properties": {
                 "file_data": {
                     "type": "string"
+                }
+            }
+        },
+        "models.Users": {
+            "type": "object",
+            "properties": {
+                "user_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

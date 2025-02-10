@@ -50,6 +50,13 @@ definitions:
       file_data:
         type: string
     type: object
+  models.Users:
+    properties:
+      user_ids:
+        items:
+          type: string
+        type: array
+    type: object
   responses.ApplicationResponse:
     properties:
       code:
@@ -241,9 +248,9 @@ paths:
     post:
       description: Save Prompt
       parameters:
-      - description: Upload the prompt in the Db
+      - description: Add the prompt in the Db
         in: body
-        name: UploadExcel
+        name: Prompt
         required: true
         schema:
           $ref: '#/definitions/models.Prompts'
@@ -268,7 +275,7 @@ paths:
         type: string
       - description: Update the prompt in the Db
         in: body
-        name: UploadExcel
+        name: Prompt
         required: true
         schema:
           $ref: '#/definitions/models.Prompts'
@@ -300,6 +307,26 @@ paths:
           schema:
             $ref: '#/definitions/responses.ApplicationResponse'
       summary: Upload Excel File
+      tags:
+      - UserData Apis
+  /initializ/v1/ai/user/delete:
+    delete:
+      description: Delete Users by their Ids
+      parameters:
+      - description: userid
+        in: body
+        name: UserId
+        required: true
+        schema:
+          $ref: '#/definitions/models.Users'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ApplicationResponse'
+      summary: Delete Users
       tags:
       - UserData Apis
 swagger: "2.0"

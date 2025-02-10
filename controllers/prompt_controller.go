@@ -89,7 +89,7 @@ func GetPromptsByID(aIPromptsRepo repository.Repository) gin.HandlerFunc {
 // @Tags					Prompt Apis
 // @Summary					Save Prompt
 // @Description				Save Prompt
-// @Param					UploadExcel body models.Prompts true "Upload the prompt in the Db"
+// @Param					Prompt body models.Prompts true "Add the prompt in the Db"
 // @Produce					application/json
 // @Success					200 {object} responses.ApplicationResponse{}
 // @Router					/initializ/v1/ai/saveprompt [POST]
@@ -119,7 +119,7 @@ func SavePrompt(aIPromptsRepo repository.Repository) gin.HandlerFunc {
 // @Summary					Update Prompt
 // @Description				Update Prompt In Db
 // @Param					promptId path string true "promptId"
-// @Param					UploadExcel body models.Prompts true "Update the prompt in the Db"
+// @Param					Prompt body models.Prompts true "Update the prompt in the Db"
 // @Produce					application/json
 // @Success					200 {object} responses.ApplicationResponse{}
 // @Router					/initializ/v1/ai/updateprompt/{promptId} [PUT]

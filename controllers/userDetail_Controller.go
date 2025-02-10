@@ -22,6 +22,7 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -112,7 +113,8 @@ func UploadExcel(userDataRepo repository.Repository, promptRepo repository.Repos
 				wg.Add(2)
 				go func() {
 					defer wg.Done()
-					linkedin := strings.Replace(user.LinkedInProfileUrl, "www", "in", -1)
+					linkedin := strings.Replace(user.LinkedInProfileUrl, "/in", "", 1)
+					linkedin = strings.Replace(linkedin, "www.linkedin.com", "in.linkedin.com", 1)
 					log.Print(linkedin)
 					linkedinData, err := services.ScrapeData(linkedin)
 					if err != nil {
@@ -389,4 +391,63 @@ func GetPainPointsForRole(painPointRepo repository.Repository, role string) (str
 	}
 
 	return painPoint.ValueProposition, nil
+}
+
+// DeleteUserDetails		godoc
+// @Tags		 		    UserData Apis
+// @Summary					Delete Users
+// @Description				Delete Users by their Ids
+// @Param                  UserId body models.Users true "userid"
+// @Produce					application/json
+// @Success					200 {object} responses.ApplicationResponse{}
+// @Router					/initializ/v1/ai/user/delete [DELETE]
+func DeleteUserDetails(userDataRepo repository.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var requestBody struct {
+			UserIDs []string `json:"user_ids"`
+		}
+
+		// Bind the JSON request body to the requestBody struct
+		if err := c.ShouldBindJSON(&requestBody); err != nil {
+			c.JSON(http.StatusBadRequest, responses.ApplicationResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Invalid request format. 'user_ids' must be provided.",
+			})
+			return
+		}
+
+		// Check if UserIDs array is empty
+		if len(requestBody.UserIDs) == 0 {
+			c.JSON(http.StatusBadRequest, responses.ApplicationResponse{
+				Status:  http.StatusBadRequest,
+				Message: "No user IDs provided.",
+			})
+			return
+		}
+
+		var objectIDs []primitive.ObjectID
+		for _, userID := range requestBody.UserIDs {
+			objectID, err := primitive.ObjectIDFromHex(userID)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, responses.ApplicationResponse{
+					Status:  http.StatusBadRequest,
+					Message: fmt.Sprintf("Invalid user ID format: %s", userID),
+				})
+				return
+			}
+			objectIDs = append(objectIDs, objectID)
+		}
+
+		filter := bson.M{"_id": bson.M{"$in": objectIDs}}
+		fmt.Println("Filter:", filter) // Debug log
+
+		// Attempt to delete users
+		userDataRepo.DeleteMany(filter)
+
+		// If no error, respond with success
+		c.JSON(http.StatusOK, responses.ApplicationResponse{
+			Status:  http.StatusOK,
+			Message: fmt.Sprintf("users deleted successfully"),
+		})
+	}
 }
