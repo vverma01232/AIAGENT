@@ -113,8 +113,7 @@ func UploadExcel(userDataRepo repository.Repository, promptRepo repository.Repos
 				wg.Add(2)
 				go func() {
 					defer wg.Done()
-					linkedin := strings.Replace(user.LinkedInProfileUrl, "/in", "", 1)
-					linkedin = strings.Replace(linkedin, "www.linkedin.com", "in.linkedin.com", 1)
+					linkedin := strings.Replace(user.LinkedInProfileUrl, "www.linkedin.com", "in.linkedin.com", 1)
 					log.Print(linkedin)
 					linkedinData, err := services.ScrapeData(linkedin)
 					if err != nil {
